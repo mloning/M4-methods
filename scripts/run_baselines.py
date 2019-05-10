@@ -73,7 +73,7 @@ def smape_loss(y_true, y_pred):
 #     return np.mean(2.0 * np.abs(a - b) / (np.abs(a) + np.abs(b))).item()
 
 #  Set paths
-repodir = "/Users/mloning/Documents/Research/python_methods/m4-methods/"
+repodir = "/home/ucfamml/Documents/Research/python_methods/m4-methods/"
 datadir = os.path.join(repodir, "Dataset")
 traindir = os.path.join(datadir, 'Train')
 testdir = os.path.join(datadir, 'Test')
@@ -114,7 +114,8 @@ files = os.listdir(os.path.join(traindir))
 keys = [f.split('-')[0] for f in files]
 
 #  Select weekly dataset
-key = keys[0]
+key = 'Weekly'
+assert key in keys
 print('Dataset:', key)
 
 #  Get seasonal frequency
@@ -147,10 +148,9 @@ baselines.extend([Forecasting2TSRReductionStrategy(estimator, name=name)
                   for name, estimator in regressors.items()])
 
 n_baselines = len(baselines)
-print(n_baselines)
 
 selected_strategies = ['Naive', 'Naive2', 'SES'] #, 'Holt' ,'Damped']
-print('Selected strategies:', selected_strategies)
+print('Selected methods:', selected_strategies)
 
 strategies = [baseline for baseline in baselines
               if baseline.name in selected_strategies]
