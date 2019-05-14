@@ -83,6 +83,7 @@ datasets = [f.split('-')[0] for f in files]
 
 #  Select weekly dataset
 selected_datasets = ('Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly')
+print(selected_datasets)
 
 for dataset in selected_datasets:
     print(f"Dataset: {dataset}")
@@ -112,16 +113,21 @@ for dataset in selected_datasets:
         for i in tqdm(range(n_series), desc=f"{strategy.name}", unit='series'):
 
             # Dataset id
-            id = f"{dataset[0]}{i + 1}"
-            fname = f"{strategy.name}_{dataset[0]}{id}_y_pred.txt"
+            dataset_id = f"{dataset[0]}{i + 1}"
+
+            # create strategy directory if necessary
+            filedir = os.path.join(savedir, strategy.name, dataset)
+            if not os.path.isdir(filedir):
+                os.makedirs(filedir)
 
             # if results file already exists, skip series
-            if os.path.isfile(fname):
+            filename = os.path.join(filedir, f"{strategy.name}_{dataset_id}_y_pred.txt")
+            if os.path.isfile(filename):
                 continue
 
             # Get dataset
-            y_train = alltrain.loc[id, :].dropna().reset_index(drop=True)
-            y_test = alltest.loc[id, :].dropna().reset_index(drop=True)
+            y_train = alltrain.loc[dataset_id, :].dropna().reset_index(drop=True)
+            y_test = alltest.loc[dataset_id, :].dropna().reset_index(drop=True)
             target_name = y_train.name
 
             # Check forecasting horizon
@@ -152,7 +158,7 @@ for dataset in selected_datasets:
             # fit and predict
             s.fit(task, train)
             y_pred = s.predict()
-            # assert y_pred.index.equals(y_test.index)
+            assert y_pred.index.equals(y_test.index)
 
             # save predictions
-            np.savetxt(os.path.join(savedir, fname), y_pred.values)
+            np.savetxt(filename, y_pred.values)
