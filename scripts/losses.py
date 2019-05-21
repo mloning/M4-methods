@@ -25,9 +25,7 @@ def mase_loss(y_true, y_pred, y_train, sp=1):
     #     for i in range(sp, len(insample)):
     #         y_pred_naive.append(insample[(i - sp)])
     y_train = np.asarray(y_train)
-
     check_consistent_length(y_true, y_pred)
-    check_consistent_length(y_true, y_train)
 
     #  naive seasonal prediction
     y_pred_naive = y_train[:-sp]

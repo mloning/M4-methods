@@ -136,7 +136,7 @@ datasets = [f.split('-')[0] for f in files]
 
 # select datasets
 selected_datasets = ('Hourly', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly')
-print(selected_datasets)
+print("Selected datasets: ", selected_datasets)
 
 
 for dataset in selected_datasets:
