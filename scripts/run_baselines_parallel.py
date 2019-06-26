@@ -6,18 +6,23 @@ from joblib import Parallel
 from joblib import delayed
 import pandas as pd
 import os
+from warnings import filterwarnings
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPRegressor
 
 from copy import deepcopy
 from sktime.forecasters import DummyForecaster
 from sktime.forecasters import ExpSmoothingForecaster
-from sktime.highlevel import Forecasting2TSRReductionStrategy
-from sktime.highlevel import ForecastingStrategy
-from sktime.highlevel import ForecastingTask
+from sktime.highlevel.strategies import Forecasting2TSRReductionStrategy
+from sktime.highlevel.strategies import ForecastingStrategy
+from sktime.highlevel.tasks import ForecastingTask
+from sktime.transformers.compose import Tabulariser
+from sktime.pipeline import Pipeline
 
 
 # define function to run in parallel
 def run_on_series(strategy, y_train, y_test, fh, sp):
+    filterwarnings('ignore', category=ConvergenceWarning, module='sklearn')
 
     # remove missing values from padding
     y_train = y_train[~np.isnan(y_train)]
@@ -51,6 +56,7 @@ def run_on_series(strategy, y_train, y_test, fh, sp):
 
     # fit and predict
     s.fit(task, train)
+
     y_pred = s.predict()
     assert y_pred.index.equals(y_test.index)
 
@@ -87,7 +93,7 @@ baselines = [strategy for strategy in strategies if isinstance(strategy, str)]
 # print('Baseline strategies:', baselines)
 
 
-# define strategies
+# Define statistical baseline methods
 forecasters = {
     'Naive': DummyForecaster(strategy='last'),  # without seasonality adjustments
     #     'sNaive': None,
@@ -99,22 +105,28 @@ forecasters = {
     #     'Theta': None,
 }
 
-# Define baseline regressors
+# Define machine learning baseline methods
+steps = [
+    ('tabularise', Tabulariser()),
+    ('regressor', MLPRegressor(hidden_layer_sizes=6, activation='identity', solver='adam',
+                               max_iter=100, learning_rate='adaptive', learning_rate_init=0.001))
+         ]
+mlp = Pipeline(steps)
+
 regressors = {
-    'MLP': MLPRegressor(hidden_layer_sizes=6, activation='identity', solver='adam',
-                        max_iter=100, learning_rate='adaptive', learning_rate_init=0.001),
-    #     'RNN': None
+    'MLP': mlp,
+    #'RNN': None
 }
 
 strategies = []
 strategies.extend([ForecastingStrategy(estimator, name=name)
                    for name, estimator in forecasters.items()])
-strategies.extend([Forecasting2TSRReductionStrategy(estimator, name=name)
+strategies.extend([Forecasting2TSRReductionStrategy(estimator, window_length=3, dynamic=True, name=name)
                    for name, estimator in regressors.items()])
 
 
 # select strategies
-selected_strategies = ('Naive',) # 'Naive2', 'SES', 'Holt', 'Damped')
+selected_strategies = ('MLP',) # 'Naive2', 'SES', 'Holt', 'Damped')
 print('Selected strategies:', selected_strategies)
 
 strategies = [strategy for strategy in strategies
@@ -135,7 +147,7 @@ datasets = [f.split('-')[0] for f in files]
 
 
 # select datasets
-selected_datasets = ('Hourly', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly')
+selected_datasets = ('Weekly',)  #'('Hourly', 'Daily', 'Weekly', 'Monthly', 'Quarterly', 'Yearly')
 print("Selected datasets: ", selected_datasets)
 
 
