@@ -37,8 +37,8 @@ def define_models(sp):
                                            max_iter=100, learning_rate='adaptive', learning_rate_init=0.001))
             ])),
         transformer=Pipeline([
-            ('detrend', Detrender(order=1)),
-            ('deseasonalise', Deseasonaliser(model='multiplicative', sp=sp))
+            ('deseasonalise', Deseasonaliser(model='multiplicative', sp=sp)),
+            ('detrend', Detrender(order=1))
         ]))
 
     models = {
